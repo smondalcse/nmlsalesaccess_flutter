@@ -42,7 +42,6 @@ class _LoginState extends State<Login> {
   }
 
   Future login() async {
-
     if (_empID.text.toString().trim().isEmpty) {
       showToast("Enter Employee ID.", context);
       return;
