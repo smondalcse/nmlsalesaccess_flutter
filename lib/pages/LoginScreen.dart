@@ -24,6 +24,7 @@ class _LoginState extends State<Login> {
   final _empID = TextEditingController();
   final _password = TextEditingController();
   bool _passwordVisible = true;
+  String deviceName = "";
 
   @override
   void initState() {
@@ -56,13 +57,13 @@ class _LoginState extends State<Login> {
 
   Future<String> getDeviceDetails() async {
 
-    String deviceName = "", deviceVersion = "", identifier = "";
+    String deviceVersion = "", identifier = "";
 
     final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
     try {
       if(Platform.isAndroid) {
         var build = await deviceInfoPlugin.androidInfo;
-        deviceName = build.model;
+        deviceName = "${build.brand} ${build.model}";
         deviceVersion = build.version.toString();
         identifier = build.androidId;
       } else if (Platform.isIOS) {
@@ -98,6 +99,7 @@ class _LoginState extends State<Login> {
       convert.jsonDecode(response.body) as Map<String, dynamic>;
       print(jsonResponse);
       LoginModel userModel = LoginModel.fromJson(jsonResponse);
+
       if (userModel.success == true) {
         if (userModel.data?.first.islogin == 1){
           Navigator.of(context).pop();
@@ -106,7 +108,7 @@ class _LoginState extends State<Login> {
           userInfo.fullName = userModel.data?.first.fullName;
           userInfo.email = userModel.data?.first.email;
           userInfo.mobile = userModel.data?.first.mobile;
-          userInfo.deviceName = userModel.data?.first.deviceName;
+          userInfo.deviceName = deviceName;
           userInfo.deviceId = deviceID;
           userInfo.dept = userModel.data?.first.deptName;
           userInfo.design = userModel.data?.first.desName;
@@ -174,7 +176,7 @@ class _LoginState extends State<Login> {
                     children: [
                       Column(
                         children: [
-                          const SizedBox(height: 100,),
+                          const SizedBox(height: 50,),
                           Image.asset( 'images/app_icon.png',
                             height: 100,
                             width: 100,),

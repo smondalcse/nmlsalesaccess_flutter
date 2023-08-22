@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:nmlsalesaccess/model/LoginModel.dart';
 import 'package:nmlsalesaccess/model/UserInfoModel.dart';
@@ -53,6 +54,15 @@ class _OTPScreenState extends State<OTPScreen> {
         userInfo.email = otpVerifyModel.data?.first.email;
         userInfo.mobile = otpVerifyModel.data?.first.mobile;
         userInfo.deviceName = widget.userInfo.deviceName;
+        userInfo.deviceId = widget.userInfo.deviceId;
+        userInfo.dept = widget.userInfo.dept;
+        userInfo.design = widget.userInfo.design;
+
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        } else {
+          SystemNavigator.pop();
+        }
 
         await Navigator.push(
           context,
