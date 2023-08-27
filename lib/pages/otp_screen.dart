@@ -2,12 +2,12 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:nmlsalesaccess/model/LoginModel.dart';
-import 'package:nmlsalesaccess/model/UserInfoModel.dart';
+import 'package:nmlsalesaccess/model/login_model.dart';
+import 'package:nmlsalesaccess/model/user_info_model.dart';
 import 'dart:convert' as convert;
-import '../model/OTPVerifyModel.dart';
-import '../network/ApiManager.dart';
-import 'HomeScreen.dart';
+import '../model/otp_verify_model.dart';
+import '../network/api_manager.dart';
+import 'home_screen.dart';
 
 class OTPScreen extends StatefulWidget {
   OTPScreen({required this.userInfo});

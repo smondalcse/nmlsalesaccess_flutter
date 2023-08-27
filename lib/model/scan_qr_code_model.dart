@@ -37,7 +37,7 @@ class Datum {
   String? qrCode;
   String? mobileAppKey;
   String? loginEmpId;
-  String? qrCodeDeviceInfoId;
+  int? qrCodeDeviceInfoId;
   bool? status;
   String? entryDate;
   int? mobileBrowserHitcount;

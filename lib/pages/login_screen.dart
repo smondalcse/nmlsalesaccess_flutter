@@ -4,13 +4,13 @@ import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:nmlsalesaccess/model/UserInfoModel.dart';
-import 'package:nmlsalesaccess/pages/HomeScreen.dart';
+import 'package:nmlsalesaccess/model/user_info_model.dart';
+import 'package:nmlsalesaccess/pages/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert' as convert;
-import '../model/LoginModel.dart';
-import '../network/ApiManager.dart';
-import 'OTPScreen.dart';
+import '../model/login_model.dart';
+import '../network/api_manager.dart';
+import 'otp_screen.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -81,71 +81,77 @@ class _LoginState extends State<Login> {
 
   Future<void> _fetchLoginData(String empID, String pass, String deviceID) async {
 
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none){
-      showToast("No internet connection found.", context);
-      return;
-    }
+    try {
+      final connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult == ConnectivityResult.none){
+        showToast("No internet connection found.", context);
+        return;
+      }
 
-    String params = "EmpID=$empID&Password=$pass&DeviceID=$deviceID";
-    showDialog(
-        context: context,
-        builder: (context) {
-          return const Center(child: CircularProgressIndicator());
-        });
-    final response = await ApiManager.getLoginData(params);
-    if (response.statusCode == 200) {
-      var jsonResponse =
-      convert.jsonDecode(response.body) as Map<String, dynamic>;
-      print(jsonResponse);
-      LoginModel userModel = LoginModel.fromJson(jsonResponse);
+      String params = "EmpID=$empID&Password=$pass&DeviceID=$deviceID";
+      showDialog(
+          context: context,
+          builder: (context) {
+            return const Center(child: CircularProgressIndicator());
+          });
+      final response = await ApiManager.getLoginData(params);
+      if (response.statusCode == 200) {
+        var jsonResponse =
+        convert.jsonDecode(response.body) as Map<String, dynamic>;
+        print(jsonResponse);
+        LoginModel userModel = LoginModel.fromJson(jsonResponse);
 
-      if (userModel.success == true) {
-        if (userModel.data?.first.islogin == 1){
-          Navigator.of(context).pop();
+        if (userModel.success == true) {
+          if (userModel.data?.first.islogin == 1){
+            Navigator.of(context).pop();
 
-          UserInfoModel userInfo = UserInfoModel(empId: _empID.text.toString().trim());
-          userInfo.fullName = userModel.data?.first.fullName;
-          userInfo.email = userModel.data?.first.email;
-          userInfo.mobile = userModel.data?.first.mobile;
-          userInfo.deviceName = deviceName;
-          userInfo.deviceId = deviceID;
-          userInfo.dept = userModel.data?.first.deptName;
-          userInfo.design = userModel.data?.first.desName;
+            UserInfoModel userInfo = UserInfoModel(empId: _empID.text.toString().trim());
+            userInfo.fullName = userModel.data?.first.fullName;
+            userInfo.email = userModel.data?.first.email;
+            userInfo.mobile = userModel.data?.first.mobile;
+            userInfo.deviceName = deviceName;
+            userInfo.deviceId = deviceID;
+            userInfo.dept = userModel.data?.first.deptName;
+            userInfo.design = userModel.data?.first.desName;
 
-          SharedPreferences pref = await SharedPreferences.getInstance();
-          pref.setString('empid', _empID.text.toString().trim());
-          pref.setString('password', _password.text.toString().trim());
+            SharedPreferences pref = await SharedPreferences.getInstance();
+            pref.setString('empid', _empID.text.toString().trim());
+            pref.setString('password', _password.text.toString().trim());
 
-          if (userModel.data?.first.otp == "true") {
+            if (userModel.data?.first.otp == "true") {
 
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => OTPScreen(userInfo: userInfo),
-              ),
-            );
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OTPScreen(userInfo: userInfo),
+                ),
+              );
+            } else {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HomeScreen(userInfo: userInfo),
+                ),
+              );
+            }
           } else {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => HomeScreen(userInfo: userInfo),
-              ),
-            );
+            Navigator.of(context).pop();
+            String? msg = userModel.data?.first.msg.toString();
+            showToast(msg!, context);
           }
         } else {
+          // print(userModel.msg);
           Navigator.of(context).pop();
-          String? msg = userModel.data?.first.msg.toString();
-          showToast(msg!, context);
+          showToast(userModel.msg!, context);
         }
       } else {
-        // print(userModel.msg);
-        Navigator.of(context).pop();
-        showToast(userModel.msg!, context);
+        print('Request failed with status: ${response.statusCode}.');
       }
-    } else {
-      print('Request failed with status: ${response.statusCode}.');
+    } catch (error) {
+      showToast("Error occurred.", context);
     }
+
+
   }
 
   @override
@@ -189,7 +195,7 @@ class _LoginState extends State<Login> {
                                 fontSize: 25, fontWeight: FontWeight.bold, color: Colors.black),
                           ),
                           const SizedBox(
-                            height: 80,
+                            height: 50,
                           ),
                           const SizedBox(height: 20),
                           TextField(
