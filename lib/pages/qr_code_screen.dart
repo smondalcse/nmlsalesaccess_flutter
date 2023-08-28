@@ -122,7 +122,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     controller.resumeCamera();
     controller.scannedDataStream.listen((scanData) {
       // Handle the scanned data (e.g., navigate to a new screen with the data)
-      controller.stopCamera();
+      controller.pauseCamera();
       _handleScanResult(scanData.code!);
     });
   }
