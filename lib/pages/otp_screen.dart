@@ -7,10 +7,11 @@ import 'package:nmlsalesaccess/model/user_info_model.dart';
 import 'dart:convert' as convert;
 import '../model/otp_verify_model.dart';
 import '../network/api_manager.dart';
+import '../others/helper.dart';
 import 'home_screen.dart';
 
 class OTPScreen extends StatefulWidget {
-  OTPScreen({required this.userInfo});
+  OTPScreen({Key? key, required this.userInfo}) : super(key: key);
   late UserInfoModel userInfo;
 
   @override
@@ -19,10 +20,11 @@ class OTPScreen extends StatefulWidget {
 
 class _OTPScreenState extends State<OTPScreen> {
   final _otpTextField = TextEditingController();
+  Helper helper = Helper();
 
   Future otpVerify() async {
     if (_otpTextField.text.toString().trim().isEmpty) {
-      showToast("Enter OTP.", context);
+      helper.showToast("Enter OTP.", context);
       return;
     }
     _otpVerifyData(widget.userInfo.empId.toString(), _otpTextField.text.toString().trim(), widget.userInfo.deviceId.toString(), widget.userInfo.deviceName.toString());
@@ -31,20 +33,23 @@ class _OTPScreenState extends State<OTPScreen> {
   Future<void> _otpVerifyData(String? empID, String otp, String deviceID, String deviceName) async {
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.none){
-      showToast("No internet connection found.", context);
+      helper.showToast("No internet connection found.", context);
       return;
     }
     String params = "EmpID=$empID&Otp=$otp&DeviceID=$deviceID&DeviceName=$deviceName";
     showDialog(
         context: context,
         builder: (context) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(
+            color: Colors.blueAccent,
+            backgroundColor: Colors.deepPurpleAccent,
+          ));
         });
     final response = await ApiManager.otpVerify(params);
     if (response.statusCode == 200) {
       var jsonResponse =
       convert.jsonDecode(response.body) as Map<String, dynamic>;
-      print(jsonResponse);
+      helper.printStatement(jsonResponse);
       OtpVerifyModel otpVerifyModel = OtpVerifyModel.fromJson(jsonResponse);
       if (otpVerifyModel.success == true) {
         Navigator.of(context).pop();
@@ -73,10 +78,10 @@ class _OTPScreenState extends State<OTPScreen> {
 
       } else {
         Navigator.of(context).pop();
-        showToast(otpVerifyModel.msg!, context);
+        helper.showToast(otpVerifyModel.msg!, context);
       }
     } else {
-      print('Request failed with status: ${response.statusCode}.');
+      helper.printStatement('Request failed with status: ${response.statusCode}.');
     }
   }
 
@@ -179,13 +184,3 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 }
 
-void showToast(String msg, BuildContext context) {
-  Fluttertoast.showToast(
-      msg: msg,
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.indigo,
-      textColor: Colors.white,
-      fontSize: 13.0);
-}

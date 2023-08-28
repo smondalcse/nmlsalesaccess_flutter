@@ -3,7 +3,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:nmlsalesaccess/model/scan_qr_code_model.dart';
 import 'package:nmlsalesaccess/model/version_check_model.dart';
 import 'package:nmlsalesaccess/pages/qr_code_screen.dart';
@@ -14,9 +13,10 @@ import '../model/user_info_model.dart';
 import 'dart:io';
 import 'dart:convert' as convert;
 import '../network/api_manager.dart';
+import '../others/helper.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({required this.userInfo});
+  HomeScreen({Key? key, required this.userInfo}) : super(key: key);
 
   late UserInfoModel userInfo;
 
@@ -31,6 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _design = "",
       _dept = "",
       _activeDevice = "";
+
+  Helper helper = Helper();
 
   @override
   void initState() {
@@ -52,11 +54,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future qrcodeScan() async {
     try {
-      String scanResult = await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => QrCodeScreen()),
-      );
 
+      //String scanResult = await
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => QrCodeScreen(userInfo: widget.userInfo)),
+      );
+/*
       if (scanResult.isNotEmpty) {
         final identifier = await getDeviceDetails();
 
@@ -71,38 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       } else {
         showToast("Failed to Scan QR Code.", context);
-      }
+      }*/
     } catch (error) {
-      showToast("Error occurred.", context);
-    }
-  }
-
-  Future<void> scanQRCode(
-      String? empID, String deviceID, String? qrCode) async {
-    try {
-      final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.none) {
-        showToast("No internet connection found.", context);
-        return;
-      }
-
-      String params = "empID=$empID&deviceID=$deviceID&qrCode=$qrCode";
-      final response = await ApiManager.scanQRCode(params);
-      if (response.statusCode == 200) {
-        var jsonResponse =
-            convert.jsonDecode(response.body) as Map<String, dynamic>;
-        print(jsonResponse);
-        ScanQrCodeModel scanQrCodeModel =
-            ScanQrCodeModel.fromJson(jsonResponse);
-
-        if (scanQrCodeModel.success != true) {
-          showToast(scanQrCodeModel.msg!, context);
-        }
-      } else {
-        print('Request failed with status: ${response.statusCode}.');
-      }
-    } catch (error) {
-      showToast("Error occurred.", context);
+      helper.showToast("Error occurred.", context);
     }
   }
 
@@ -113,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
         throw Exception('Could not launch Sale Software.');
       }
     } catch (error) {
-      showToast("Error occurred.", context);
+      helper.showToast("Error occurred.", context);
     }
   }
 
@@ -121,92 +97,69 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.none) {
-        showToast("No internet connection found.", context);
+        helper.showToast("No internet connection found.", context);
         return;
       }
 
-      const _chars =
-          'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
+      const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
       Random _rnd = Random();
       String getRandomString(int length) =>
           String.fromCharCodes(Iterable.generate(
               length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
 
       final mobileAppKey = getRandomString(30);
-      final identifier = await getDeviceDetails();
-      String? empID = widget.userInfo.empId;
 
+      final deviceInfo = await helper.getDeviceDetails();
+      final identifier = deviceInfo[2];
+      String? empID = widget.userInfo.empId;
       String params =
           "EmpID=$empID&Mobileappkey=$mobileAppKey&deviceID=$identifier";
       final response = await ApiManager.saveMobileAppKey(params);
       if (response.statusCode == 200) {
         var jsonResponse =
             convert.jsonDecode(response.body) as Map<String, dynamic>;
-        print(jsonResponse);
+        helper.printStatement(jsonResponse);
         SaveMobileAppKeyModel saveMobileAppKeyModel =
             SaveMobileAppKeyModel.fromJson(jsonResponse);
 
         if (saveMobileAppKeyModel.success != true) {
-          showToast(saveMobileAppKeyModel.msg!, context);
+          helper.showToast(saveMobileAppKeyModel.msg!, context);
         } else {
           openNMLSalesInWeb(saveMobileAppKeyModel.data?.first.salesUrl);
         }
       } else {
-        print('Request failed with status: ${response.statusCode}.');
+        helper.printStatement('Request failed with status: ${response.statusCode}.');
       }
     } catch (error) {
-      showToast("Error occurred.", context);
+      helper.showToast("Error occurred.", context);
     }
-  }
-
-  Future<String> getDeviceDetails() async {
-    String deviceName = "", deviceVersion = "", identifier = "";
-
-    final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
-    try {
-      if (Platform.isAndroid) {
-        var build = await deviceInfoPlugin.androidInfo;
-        deviceName = build.model;
-        deviceVersion = build.version.toString();
-        identifier = build.androidId;
-      } else if (Platform.isIOS) {
-        var data = await deviceInfoPlugin.iosInfo;
-        deviceName = data.name;
-        deviceVersion = data.systemVersion;
-        identifier = data.identifierForVendor;
-      }
-    } on PlatformException {
-      print('Failed to get platform infomation');
-    }
-
-    return identifier;
   }
 
   Future checkVersion() async {
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.none) {
-        showToast("No internet connection found.", context);
+        helper.showToast("No internet connection found.", context);
         return;
       }
 
-      final appName = "NMLSalesAccess", version = "1.5";
+      const appName = "NMLSalesAccess", version = "1.5";
       String params = "AppName=$appName&Version=$version";
       final response = await ApiManager.versionCheck(params);
       if (response.statusCode == 200) {
         var jsonResponse =
             convert.jsonDecode(response.body) as Map<String, dynamic>;
-        print(jsonResponse);
+        helper.printStatement(jsonResponse);
         VersionCheckModel versionCheckModel =
             VersionCheckModel.fromJson(jsonResponse);
         if (versionCheckModel.success == true) {
-          showToast("Please Update your app.", context);
+          helper.showToast("Please Update your app.", context);
         }
       } else {
-        print('Request failed with status: ${response.statusCode}.');
+        helper.printStatement('Request failed with status: ${response.statusCode}.');
       }
     } catch (error) {
-      showToast("Error occurred.", context);
+      helper.showToast("Error occurred.", context);
     }
   }
 
@@ -453,15 +406,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
-
-void showToast(String msg, BuildContext context) {
-  Fluttertoast.showToast(
-      msg: msg,
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.indigo,
-      textColor: Colors.white,
-      fontSize: 13.0);
 }

@@ -1,15 +1,14 @@
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:device_info/device_info.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:nmlsalesaccess/model/user_info_model.dart';
 import 'package:nmlsalesaccess/pages/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert' as convert;
 import '../model/login_model.dart';
 import '../network/api_manager.dart';
+import '../others/helper.dart';
+import '../others/shared_preferences_util.dart';
 import 'otp_screen.dart';
 
 class Login extends StatefulWidget {
@@ -21,40 +20,36 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
 
+  Helper helper = Helper();
   final _empID = TextEditingController();
   final _password = TextEditingController();
   bool _passwordVisible = true;
   String deviceName = "";
 
+  // static const String PREF_EMPID = "empId";
+  // static const String PREF_PASSWORD = "password";
+
   @override
   void initState() {
-    // TODO: implement initState
-  //  setPrefValue();
     super.initState();
-  }
-
-  setPrefValue() async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    setState((){
-      String empid = pref.getString('empid')!;
-      String password = pref.getString('password')!;
-    });
-
+    getSharedPref();
   }
 
   Future login() async {
     if (_empID.text.toString().trim().isEmpty) {
-      showToast("Enter Employee ID.", context);
+      helper.showToast("Enter Employee ID.", context);
       return;
     }
     if (_password.text.toString().trim().isEmpty) {
-      showToast("Enter Sales Password.", context);
+      helper.showToast("Enter Sales Password.", context);
       return;
     }
-    final identifier = await getDeviceDetails();
-    _fetchLoginData(_empID.text.toString().trim(), _password.text.toString().trim(), identifier);
+  //  final identifier = await getDeviceDetails();
+    final deviceInfo = await helper.getDeviceDetails();
+    deviceName = deviceInfo[0];
+    _fetchLoginData(_empID.text.toString().trim(), _password.text.toString().trim(), deviceInfo[2]);
   }
-
+/*
   Future<String> getDeviceDetails() async {
 
     String deviceVersion = "", identifier = "";
@@ -73,18 +68,18 @@ class _LoginState extends State<Login> {
         identifier = data.identifierForVendor;
       }
     } on PlatformException {
-      print('Failed to get platform information');
+      helper.printStatement('Failed to get platform information');
     }
 
     return identifier;
   }
-
+*/
   Future<void> _fetchLoginData(String empID, String pass, String deviceID) async {
 
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.none){
-        showToast("No internet connection found.", context);
+        helper.showToast("No internet connection found.", context);
         return;
       }
 
@@ -92,13 +87,16 @@ class _LoginState extends State<Login> {
       showDialog(
           context: context,
           builder: (context) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(
+              color: Colors.blueAccent,
+              backgroundColor: Colors.deepPurpleAccent,
+            ));
           });
       final response = await ApiManager.getLoginData(params);
       if (response.statusCode == 200) {
         var jsonResponse =
         convert.jsonDecode(response.body) as Map<String, dynamic>;
-        print(jsonResponse);
+        helper.printStatement(jsonResponse);
         LoginModel userModel = LoginModel.fromJson(jsonResponse);
 
         if (userModel.success == true) {
@@ -114,9 +112,7 @@ class _LoginState extends State<Login> {
             userInfo.dept = userModel.data?.first.deptName;
             userInfo.design = userModel.data?.first.desName;
 
-            SharedPreferences pref = await SharedPreferences.getInstance();
-            pref.setString('empid', _empID.text.toString().trim());
-            pref.setString('password', _password.text.toString().trim());
+            saveIntoSharedPreference(_empID.text.toString().trim(), _password.text.toString().trim(), userInfo.fullName!, userInfo.mobile!, userInfo.deviceId!);
 
             if (userModel.data?.first.otp == "true") {
 
@@ -137,21 +133,19 @@ class _LoginState extends State<Login> {
           } else {
             Navigator.of(context).pop();
             String? msg = userModel.data?.first.msg.toString();
-            showToast(msg!, context);
+            helper.showToast(msg!, context);
           }
         } else {
-          // print(userModel.msg);
+          // helper.printStatement(userModel.msg);
           Navigator.of(context).pop();
-          showToast(userModel.msg!, context);
+          helper.showToast(userModel.msg!, context);
         }
       } else {
-        print('Request failed with status: ${response.statusCode}.');
+        helper.printStatement('Request failed with status: ${response.statusCode}.');
       }
     } catch (error) {
-      showToast("Error occurred.", context);
+      helper.showToast("Error occurred.", context);
     }
-
-
   }
 
   @override
@@ -213,6 +207,10 @@ class _LoginState extends State<Login> {
                                     BorderRadius.circular(12)),
                                 hintText: 'Emp ID',
                                 fillColor: Colors.white,
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsets.only(top: 15, bottom: 15), /// add padding to adjust icon
+                                  child: Icon(Icons.lock),
+                                ),
                                 filled: true),
                           ),
                           const SizedBox(height: 15),
@@ -230,6 +228,10 @@ class _LoginState extends State<Login> {
                                       borderRadius: BorderRadius.circular(12)),
                                   hintText: 'Sales Password',
                                   fillColor: Colors.white,
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.only(top: 15, bottom: 15), // add padding to adjust icon
+                                    child: Icon(Icons.person),
+                                  ),
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _passwordVisible
@@ -250,7 +252,7 @@ class _LoginState extends State<Login> {
                               login();
                             },
                             child: Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(17),
                               decoration: BoxDecoration(
                                   color: Colors.indigo,
                                   borderRadius: BorderRadius.circular(20)),
@@ -259,7 +261,7 @@ class _LoginState extends State<Login> {
                                     style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 13)),
+                                        fontSize: 16)),
                               ),
                             ),
                           )
@@ -275,15 +277,22 @@ class _LoginState extends State<Login> {
       ),
     );
   }
+
+  Future<void> saveIntoSharedPreference(String empId, String password, String fullName, String mobile, String deviceId) async {
+    await SharedPreferencesUtil.instance.init();
+    SharedPreferencesUtil.instance.setEmpId(empId);
+    SharedPreferencesUtil.instance.setPassword(password);
+    SharedPreferencesUtil.instance.setFullName(fullName);
+    SharedPreferencesUtil.instance.setMobile(mobile);
+    SharedPreferencesUtil.instance.setDeviceId(deviceId);
+  }
+
+  void getSharedPref() async {
+    await SharedPreferencesUtil.instance.init();
+    String empId = SharedPreferencesUtil.instance.getEmpId() ?? "";
+    String password = SharedPreferencesUtil.instance.getPassword() ?? "";
+    _empID.text = empId;
+    _password.text = password;
+  }
 }
 
-void showToast(String msg, BuildContext context) {
-  Fluttertoast.showToast(
-      msg: msg,
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.indigo,
-      textColor: Colors.white,
-      fontSize: 13.0);
-}
