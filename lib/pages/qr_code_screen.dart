@@ -24,7 +24,6 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
   QRViewController? controller;
   String qrCode = "";
   Helper helper = Helper();
-  String verificationStatus = "Scanning...";
 
   @override
   Widget build(BuildContext context) {
@@ -177,10 +176,8 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
 
         if (scanQrCodeModel.success != true) {
           helper.showToast(scanQrCodeModel.msg!, context);
-          verificationStatus = scanQrCodeModel.msg!;
         } else {
-          helper.showToast("Verification Success.", context);
-          verificationStatus = "Verification Success.";
+          helper.showToast(scanQrCodeModel.msg!, context);
         }
 
       } else {
