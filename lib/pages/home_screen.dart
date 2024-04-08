@@ -57,28 +57,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
       //String scanResult = await
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => QrCodeScreen(userInfo: widget.userInfo)),
-      );
-/*
-      if (scanResult.isNotEmpty) {
-        final identifier = await getDeviceDetails();
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(builder: (context) => QrCodeScreen(userInfo: widget.userInfo)),
+      // );
 
-        var cameraStatus = await Permission.camera.status;
-        if (cameraStatus.isGranted) {
-          scanQRCode(widget.userInfo.empId, identifier, scanResult);
-        } else {
-          var isGrant = await Permission.camera.request();
-          if (isGrant.isGranted) {
-            scanQRCode(widget.userInfo.empId, identifier, scanResult);
-          }
-        }
+      var cameraStatus = await Permission.camera.status;
+      if (cameraStatus.isGranted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => QrCodeScreen(userInfo: widget.userInfo)),
+        );
       } else {
-        showToast("Failed to Scan QR Code.", context);
-      }*/
+        var isGrant = await Permission.camera.request();
+        if (isGrant.isGranted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => QrCodeScreen(userInfo: widget.userInfo)),
+          );
+        }
+      }
     } catch (error) {
-      helper.showToast("Error occurred.", context);
+      helper.showToast("Error occurred.");
     }
   }
 
@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
         throw Exception('Could not launch Sale Software.');
       }
     } catch (error) {
-      helper.showToast("Error occurred.", context);
+      helper.showToast("Error occurred.");
     }
   }
 
@@ -97,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.none) {
-        helper.showToast("No internet connection found.", context);
+        helper.showToast("No internet connection found.");
         return;
       }
 
@@ -123,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SaveMobileAppKeyModel.fromJson(jsonResponse);
 
         if (saveMobileAppKeyModel.success != true) {
-          helper.showToast(saveMobileAppKeyModel.msg!, context);
+          helper.showToast(saveMobileAppKeyModel.msg!);
         } else {
           openNMLSalesInWeb(saveMobileAppKeyModel.data?.first.salesUrl);
         }
@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
         helper.printStatement('Request failed with status: ${response.statusCode}.');
       }
     } catch (error) {
-      helper.showToast("Error occurred.", context);
+      helper.showToast("Error occurred.");
     }
   }
 
@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.none) {
-        helper.showToast("No internet connection found.", context);
+        helper.showToast("No internet connection found.");
         return;
       }
 
@@ -153,13 +153,13 @@ class _HomeScreenState extends State<HomeScreen> {
         VersionCheckModel versionCheckModel =
             VersionCheckModel.fromJson(jsonResponse);
         if (versionCheckModel.success == true) {
-          helper.showToast("Please Update your app.", context);
+          helper.showToast("Please Update your app.");
         }
       } else {
         helper.printStatement('Request failed with status: ${response.statusCode}.');
       }
     } catch (error) {
-      helper.showToast("Error occurred.", context);
+      helper.showToast("Error occurred.");
     }
   }
 
@@ -370,8 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                     const SizedBox(width: 15),
                                     Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: const [
                                         Text(
                                           "NML Sales",

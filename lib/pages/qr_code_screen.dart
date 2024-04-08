@@ -72,7 +72,24 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: _buildQrView(context),
+                  child: Stack(
+                    children: [
+                      Container(
+                        decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color.fromARGB(204, 199, 199, 199),
+                                Color.fromARGB(255, 146, 146, 146),
+                              ],
+                            ),
+                            borderRadius:
+                            BorderRadius.all(Radius.circular(5))),
+                      ),
+                      _buildQrView(context),
+                    ],
+                  )
                 ),
                 Container(
                   height: 80,
@@ -82,7 +99,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
                       controller?.resumeCamera();
                     },
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(0, 20, 0, 20),
+                      padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
                       child: Container(
                         decoration: BoxDecoration(
                             color: Colors.indigo,
@@ -114,16 +131,33 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
   }
 
   void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-    });
+    try {
 
-    controller.resumeCamera();
-    controller.scannedDataStream.listen((scanData) {
-      // Handle the scanned data (e.g., navigate to a new screen with the data)
+      this.controller = controller;
+      controller.scannedDataStream.listen((scanData) {
+        setState(() {
+          controller.pauseCamera();
+          _handleScanResult(scanData.code!);
+        });
+      });
       controller.pauseCamera();
-      _handleScanResult(scanData.code!);
-    });
+      controller.resumeCamera();
+
+      /*
+      setState(() {
+        this.controller = controller;
+      });
+
+      controller.resumeCamera();
+      controller.scannedDataStream.listen((scanData) {
+        // Handle the scanned data (e.g., navigate to a new screen with the data)
+        controller.pauseCamera();
+        _handleScanResult(scanData.code!);
+      });
+      */
+    } catch (error) {
+      helper.printStatement(error);
+    }
   }
 
   Future<void> _handleScanResult(String scanData) async {
@@ -160,7 +194,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
 
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.none) {
-        helper.showToast("No internet connection found.", context);
+        helper.showToast("No internet connection found.");
         return;
       }
 
@@ -175,9 +209,9 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
         ScanQrCodeModel.fromJson(jsonResponse);
 
         if (scanQrCodeModel.success != true) {
-          helper.showToast(scanQrCodeModel.msg!, context);
+          helper.showToast(scanQrCodeModel.msg!);
         } else {
-          helper.showToast(scanQrCodeModel.msg!, context);
+          helper.showToast(scanQrCodeModel.msg!);
         }
 
       } else {
@@ -185,7 +219,7 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
         helper.printStatement('Request failed with status: ${response.statusCode}.');
       }
     } catch (error) {
-      helper.showToast("Error occurred.", context);
+      helper.showToast("Error occurred.");
     }
   }
 

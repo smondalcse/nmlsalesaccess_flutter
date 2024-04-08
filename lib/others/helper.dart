@@ -6,7 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:io';
 
 class Helper {
-  void showToast(String msg, BuildContext context) {
+  void showToast(String msg) {
     Fluttertoast.showToast(
         msg: msg,
         toastLength: Toast.LENGTH_LONG,

@@ -24,7 +24,7 @@ class _OTPScreenState extends State<OTPScreen> {
 
   Future otpVerify() async {
     if (_otpTextField.text.toString().trim().isEmpty) {
-      helper.showToast("Enter OTP.", context);
+      helper.showToast("Enter OTP.");
       return;
     }
     _otpVerifyData(widget.userInfo.empId.toString(), _otpTextField.text.toString().trim(), widget.userInfo.deviceId.toString(), widget.userInfo.deviceName.toString());
@@ -33,7 +33,7 @@ class _OTPScreenState extends State<OTPScreen> {
   Future<void> _otpVerifyData(String? empID, String otp, String deviceID, String deviceName) async {
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.none){
-      helper.showToast("No internet connection found.", context);
+      helper.showToast("No internet connection found.");
       return;
     }
     String params = "EmpID=$empID&Otp=$otp&DeviceID=$deviceID&DeviceName=$deviceName";
@@ -78,7 +78,7 @@ class _OTPScreenState extends State<OTPScreen> {
 
       } else {
         Navigator.of(context).pop();
-        helper.showToast(otpVerifyModel.msg!, context);
+        helper.showToast(otpVerifyModel.msg!);
       }
     } else {
       helper.printStatement('Request failed with status: ${response.statusCode}.');

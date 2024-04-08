@@ -37,11 +37,11 @@ class _LoginState extends State<Login> {
 
   Future login() async {
     if (_empID.text.toString().trim().isEmpty) {
-      helper.showToast("Enter Employee ID.", context);
+      helper.showToast("Enter Employee ID.");
       return;
     }
     if (_password.text.toString().trim().isEmpty) {
-      helper.showToast("Enter Sales Password.", context);
+      helper.showToast("Enter Sales Password.");
       return;
     }
   //  final identifier = await getDeviceDetails();
@@ -49,37 +49,13 @@ class _LoginState extends State<Login> {
     deviceName = deviceInfo[0];
     _fetchLoginData(_empID.text.toString().trim(), _password.text.toString().trim(), deviceInfo[2]);
   }
-/*
-  Future<String> getDeviceDetails() async {
 
-    String deviceVersion = "", identifier = "";
-
-    final DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
-    try {
-      if(Platform.isAndroid) {
-        var build = await deviceInfoPlugin.androidInfo;
-        deviceName = "${build.brand} ${build.model}";
-        deviceVersion = build.version.toString();
-        identifier = build.androidId;
-      } else if (Platform.isIOS) {
-        var data = await deviceInfoPlugin.iosInfo;
-        deviceName = data.name;
-        deviceVersion = data.systemVersion;
-        identifier = data.identifierForVendor;
-      }
-    } on PlatformException {
-      helper.printStatement('Failed to get platform information');
-    }
-
-    return identifier;
-  }
-*/
   Future<void> _fetchLoginData(String empID, String pass, String deviceID) async {
 
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.none){
-        helper.showToast("No internet connection found.", context);
+        helper.showToast("No internet connection found.");
         return;
       }
 
@@ -133,18 +109,18 @@ class _LoginState extends State<Login> {
           } else {
             Navigator.of(context).pop();
             String? msg = userModel.data?.first.msg.toString();
-            helper.showToast(msg!, context);
+            helper.showToast(msg!);
           }
         } else {
           // helper.printStatement(userModel.msg);
           Navigator.of(context).pop();
-          helper.showToast(userModel.msg!, context);
+          helper.showToast(userModel.msg!);
         }
       } else {
         helper.printStatement('Request failed with status: ${response.statusCode}.');
       }
     } catch (error) {
-      helper.showToast("Error occurred.", context);
+      helper.showToast("Error occurred.");
     }
   }
 
@@ -279,20 +255,29 @@ class _LoginState extends State<Login> {
   }
 
   Future<void> saveIntoSharedPreference(String empId, String password, String fullName, String mobile, String deviceId) async {
-    await SharedPreferencesUtil.instance.init();
-    SharedPreferencesUtil.instance.setEmpId(empId);
-    SharedPreferencesUtil.instance.setPassword(password);
-    SharedPreferencesUtil.instance.setFullName(fullName);
-    SharedPreferencesUtil.instance.setMobile(mobile);
-    SharedPreferencesUtil.instance.setDeviceId(deviceId);
+    try {
+      await SharedPreferencesUtil.instance.init();
+      SharedPreferencesUtil.instance.setEmpId(empId);
+      SharedPreferencesUtil.instance.setPassword(password);
+      SharedPreferencesUtil.instance.setFullName(fullName);
+      SharedPreferencesUtil.instance.setMobile(mobile);
+      SharedPreferencesUtil.instance.setDeviceId(deviceId);
+    } catch (error) {
+      helper.printStatement(error);
+    }
   }
 
   void getSharedPref() async {
-    await SharedPreferencesUtil.instance.init();
-    String empId = SharedPreferencesUtil.instance.getEmpId() ?? "";
-    String password = SharedPreferencesUtil.instance.getPassword() ?? "";
-    _empID.text = empId;
-    _password.text = password;
+    try {
+      await SharedPreferencesUtil.instance.init();
+      String empId = SharedPreferencesUtil.instance.getEmpId() ?? "";
+      String password = SharedPreferencesUtil.instance.getPassword() ?? "";
+      _empID.text = empId;
+      _password.text = password;
+    } catch (error) {
+      helper.printStatement(error);
+    }
+
   }
 }
 
